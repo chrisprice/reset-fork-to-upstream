@@ -13,10 +13,10 @@ import (
 	"os"
 )
 
-const securePrefix string = "/repos"
+const securePrefix string = "/secure"
 
 func configureSecureRoutes(secureRouter *mux.Router, oauth *OAuth, render *render.Render) {
-	secureRouter.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+	secureRouter.HandleFunc("/repos", func(w http.ResponseWriter, req *http.Request) {
 		client := oauth.GetGithubClient(req)
 
 		repos, err := ListRepos(client)
@@ -30,7 +30,7 @@ func configureSecureRoutes(secureRouter *mux.Router, oauth *OAuth, render *rende
 	}).
 		Name("repos")
 
-	secureRouter.HandleFunc("/{owner}/{repo}", func(w http.ResponseWriter, req *http.Request) {
+	secureRouter.HandleFunc("/repos/{owner}/{repo}", func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 
 		fork := Fork{
@@ -50,7 +50,7 @@ func configureSecureRoutes(secureRouter *mux.Router, oauth *OAuth, render *rende
 	}).
 		Name("repo")
 
-	secureRouter.HandleFunc("/{owner}/{repo}/resets", func(w http.ResponseWriter, req *http.Request) {
+	secureRouter.HandleFunc("/repos/{owner}/{repo}/resets", func(w http.ResponseWriter, req *http.Request) {
 		// Probably a better way to do this
 		chocolateDigestive, err := req.Cookie("session")
 		if err != nil || req.Header.Get("X-Csrf-Token") != chocolateDigestive.Value {
@@ -71,9 +71,14 @@ func configureSecureRoutes(secureRouter *mux.Router, oauth *OAuth, render *rende
 			return
 		}
 
-		url, _ := secureRouter.Get("repo").URL("owner", fork.owner, "repo", fork.repo)
-		http.Redirect(w, req, url.String(), http.StatusTemporaryRedirect)
+		status, err := fork.GetStatus()
 
+		if err != nil {
+			render.JSON(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		render.JSON(w, http.StatusOK, status)
 	}).
 		Name("repo-reset-post").
 		Methods("POST")
@@ -92,6 +97,9 @@ func main() {
 
 	secureRouter := mux.NewRouter().PathPrefix(securePrefix).Subrouter()
 	configureSecureRoutes(secureRouter, oauth, render)
+	secureRouter.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, appURL, http.StatusTemporaryRedirect)
+	})
 
 	secure := negroni.New()
 	secure.Use(GetLoginRequired())
@@ -105,8 +113,9 @@ func main() {
 
 	unsecure := negroni.New()
 	unsecure.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://locahost", appURL},
-		AllowedMethods:   []string{"GET", "POST"},
+		AllowedHeaders:   []string{"Accept", "X-Csrf-Token"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedOrigins:   []string{appURL},
 		AllowCredentials: true}))
 	unsecure.Use(sessions.Sessions("session", cookies.New([]byte(os.Getenv("COOKIE_SECRET")))))
 	unsecure.Use(oauth.GetOAuth2Provider())

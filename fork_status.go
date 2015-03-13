@@ -156,7 +156,7 @@ func (f *Fork) resetBranch(name string, branch *BranchStatus) *github.Reference 
 			Object: &github.GitObject{SHA: &branch.ParentSHA},
 		}, true)
 
-	case branch.SHA == "" && branch.ParentSHA != "":
+	case branch.SHA != "" && branch.ParentSHA == "":
 		fmt.Printf("delete %s: %s => \n", name, branch.SHA)
 		_, err = f.client.Git.DeleteRef(f.owner, f.repo, path)
 

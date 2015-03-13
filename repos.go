@@ -14,7 +14,7 @@ func ListRepos(client *github.Client) ([]Repo, error) {
 	repos, _, err := client.Repositories.List("", &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100},
-		Type: "heads",
+		Type: "all",
 	})
 
 	if err != nil {
