@@ -3,7 +3,7 @@ import "jquery-ui/autocomplete";
 import ko from "knockout";
 import {v4 as uuid} from "node-uuid";
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "/";
 const API_REPOS_URL = `${API_BASE_URL}/secure/repos`;
 const API_LOGIN_URL = `${API_BASE_URL}/login`;
 const API_LOGOUT_URL = `${API_BASE_URL}/logout`;

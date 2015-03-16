@@ -16,7 +16,7 @@ var ko = _interopRequire(require("knockout"));
 
 var uuid = require("node-uuid").v4;
 
-var API_BASE_URL = "http://localhost:3000";
+var API_BASE_URL = "/";
 var API_REPOS_URL = "" + API_BASE_URL + "/secure/repos";
 var API_LOGIN_URL = "" + API_BASE_URL + "/login";
 var API_LOGOUT_URL = "" + API_BASE_URL + "/logout";
