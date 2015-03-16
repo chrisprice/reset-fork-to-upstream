@@ -1,0 +1,158 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <title>reset-fork-to-upstream</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,minimum-scale=1.0,initial-scale=1,user-scalable=yes">
+
+  <link rel="shortcut icon" href="/dist/favicon.ico">
+  <link type="text/css" rel="stylesheet" media="all" href="/dist/index.css">
+
+  <script defer src="/dist/index.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <![endif]-->
+
+  <script src="//localhost:35729/livereload.js"></script>
+
+</head>
+<body>
+
+  <div class="container loading" data-bind="visible: !ready()">
+    <h1>Loading</h1>
+  </div>
+
+  <div class="container" data-bind="visible: ready()" style="display: none">
+    <div class="header">
+      <nav>
+        <ul class="nav nav-pills pull-right">
+          <li role="presentation"><a href="#" data-bind="text: loggedIn() ? 'Logout' : 'Login', click: toggleSession"></a></li>
+        </ul>
+      </nav>
+      <h3>Reset Fork To Upstream</h3>
+    </div>
+
+    <div class="jumbotron" data-bind="visible: !loggedIn()">
+      <h1>Forking Crickey!</h1>
+      <p class="lead">Automagically reset your fork to a clean copy of the forked repository using the GitHub API.</p>
+      <p data-bind="visible: !loggedIn()"><a class="btn btn-lg btn-success" href="#" role="button" data-bind="click: toggleSession">Get Started</a></p>
+    </div>
+
+    <div class="row" data-bind="visible: loggedIn">
+      <form class="col-lg-12" data-bind="submit: loadSelectedRepoDetails">
+        <h4>1. Choose a fork you have push access to -</h4>
+        <input class="form-control" data-bind="jqAuto: { source: repos, value: selectedRepo, labelProp: 'FullName' }" />  
+      </form>
+    </div>
+
+    <div class="container" data-bind="visible: loadingRepoDetails">
+      <h4 class="loading">Loading</h4>
+    </div>
+
+    <div class="row" data-bind="visible: selectedRepoInSync">
+      <h4 class="in-sync">All branches are in sync.</h4>
+    </div>
+
+    <div class="row" data-bind="visible: selectedRepoHasChanges">
+      <div class="col-lg-12">
+        <h4>2. Review the changes -</h4>
+
+        <div class="table-responsive repo-summary">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Summary <a href="#" data-bind="click: toggleSelectedRepoDetails">(details)</a></th>
+              </tr>
+            </thead>
+            <tbody data-bind="with: selectedRepoSummary">
+              <tr data-bind="visible: unchanged">
+                <td class="success">
+                  <span data-bind="text: unchanged"></span> branch<!--ko if: unchanged > 1-->es<!--/ko--> will be unchanged.
+                </td>
+              </tr>
+              <tr data-bind="visible: created">
+                <td class="info">
+                  <span data-bind="text: created"></span> branch<!--ko if: created > 1-->es<!--/ko--> will be created.
+                </td>
+              </tr>
+              <tr data-bind="visible: reset">
+                <td class="warning">
+                  <span data-bind="text: reset"></span> branch<!--ko if: reset > 1-->es<!--/ko--> will be reset. <b>Your changes will be lost.</b>
+                </td>
+              </tr>
+              <tr data-bind="visible: deleted">
+                <td class="danger">
+                  <span data-bind="text: deleted"></span> branch<!--ko if: deleted > 1-->es<!--/ko--> will be deleted. <b>Your changes will be lost.</b>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-responsive repo-details" data-bind="visible: viewSelectedRepoDetails, with: selectedRepoDetails">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>SHA</th>
+                <th>Parent SHA</th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: BranchList">
+              <tr data-bind="css: $root.branchClassName($data)">
+                <td data-bind="text: Name"></td>
+                <td><span data-bind="text: SHA"></span></td>
+                <td><span data-bind="text: ParentSHA"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row"data-bind="visible: selectedRepoHasChanges">
+      <form class="col-lg-12" data-bind="submit: reset">
+        <h4>3. Perform the changes -</h4>
+        <div class="form-group" data-bind="with: selectedRepo">
+          <label for="fullName">Are you sure you want to reset all of your changes?</label>
+          <input type="text" class="form-control" id="fullName" data-bind="value: $root.userEnteredFullName, valueUpdate: 'keyup', attr: { placeholder: 'Enter the full name of the repository (' + Owner + '/' + Name + ') to enable the reset button.' }">
+        </div>
+        <button type="submit" class="btn btn-danger" data-bind="enable: resetEnabled">RESET</button>
+      </form>
+    </div>
+
+    <div class="row details">
+      <div class="col-lg-6">
+        <h4>How does it work?</h4>
+        <p>For every branch in your repository, the GitHub API is used to perform the equivalent of -</p>
+        <pre>git remote add u /url/to/forked/repo
+git fetch u
+git push --force origin u/master:master</pre>
+        <h4>Why did you build this?</h4>
+        <p>The <a href="http://scottlogic.com">company</a> I work for uses GitHub to host its <a href="http://blog.scottlogic.com">blogs</a> and regularly receives contributions from people who are just starting out with git. This is intended to make their lives easier.</p>
+        <h4>Can I see the source?</h4>
+        <p><a href="https://github.com/chrisprice/reset-fork-to-upstream">Of course.</a></p>
+      </div>
+
+      <div class="col-lg-6">
+        <h4>Where's the undo button?</h4>
+        <p>There isn't one.</p>
+        <h4>No really, where's my work gone?!!</h4>
+        <p>Before the reset is performed a backup of all of your branches is taken and stored into your fork. It is not visible in the GitHub interface but can be accessed from the command line -
+        <pre>.git/refs/backups/&lt;time&gt;/&lt;branch&gt;</pre>
+        <h4>How do I restore a backup?</h4>
+        <p>As I don't want to encourage this workflow, I'm not going to disclose that here. However, if you're stuck, <a href="mailto:price.c@gmail.com">drop me an email</a> and I'll point you in the right direction.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="container">
+
+    </div>
+  </footer>
+</body>
+</html>

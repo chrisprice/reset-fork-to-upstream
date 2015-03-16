@@ -105,12 +105,6 @@ func main() {
 	secure.Use(GetLoginRequired())
 	secure.UseHandler(secureRouter)
 
-	unsecureRouter := mux.NewRouter()
-	unsecureRouter.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		http.Redirect(w, req, appURL, http.StatusMovedPermanently)
-	})
-	unsecureRouter.PathPrefix(securePrefix).Handler(secure)
-
 	unsecure := negroni.New()
 	unsecure.Use(cors.New(cors.Options{
 		AllowedHeaders:   []string{"Accept", "X-Csrf-Token"},
@@ -119,6 +113,9 @@ func main() {
 		AllowCredentials: true}))
 	unsecure.Use(sessions.Sessions("session", cookies.New([]byte(os.Getenv("COOKIE_SECRET")))))
 	unsecure.Use(oauth.GetOAuth2Provider())
+	unsecureRouter := mux.NewRouter()
+	unsecureRouter.PathPrefix(securePrefix).Handler(secure)
+	unsecure.Use(negroni.NewStatic(http.Dir("public")))
 	unsecure.UseHandler(unsecureRouter)
 
 	unsecure.Run(":" + os.Getenv("PORT"))

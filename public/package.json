@@ -1,0 +1,41 @@
+{
+  "name": "reset-fork-to-upstream",
+  "version": "0.0.0",
+  "description": "Hard reset a GitHub fork's main branch to match upstream",
+  "main": "index.js",
+  "scripts": {
+    "test": "n.a."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:chrisprice/reset-fork-to-upstream.git"
+  },
+  "keywords": [
+    "reset",
+    "fork",
+    "github",
+    "upstream"
+  ],
+  "author": "Chris Price",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chrisprice/reset-fork-to-upstream/issues"
+  },
+  "homepage": "https://github.com/chrisprice/reset-fork-to-upstream",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-babel": "^4.0.0",
+    "grunt-browserify": "^3.5.0",
+    "grunt-contrib-less": "^1.0.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "load-grunt-tasks": "^3.1.0"
+  },
+  "dependencies": {
+    "bootstrap": "^3.3.2",
+    "jquery": "^2.1.3",
+    "jquery-ui": "^1.10.5",
+    "knockout": "^3.3.0",
+    "knockout-jqAutocomplete": "git://github.com/rniemeyer/knockout-jqAutocomplete",
+    "node-uuid": "^1.4.3"
+  }
+}
