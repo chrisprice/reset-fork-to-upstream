@@ -23,6 +23,13 @@ func ListRepos(client *github.Client) ([]Repo, error) {
 
 	result := make([]Repo, 0, len(repos))
 	for _, repo := range repos {
+		if repo.Fork == nil || !*repo.Fork {
+			continue
+		}
+		push := repo.Permissions == nil || (*repo.Permissions)["push"]
+		if !push {
+			continue
+		}
 		result = append(result, Repo{
 			Name:  *repo.Name,
 			Owner: *repo.Owner.Login,
