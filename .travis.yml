@@ -1,9 +1,0 @@
-install:
-  - cd public
-  - npm install
-  - cd ..
-script:
-  - go build
-  - cd public
-  - grunt
-  - cd ..
