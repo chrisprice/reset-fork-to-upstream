@@ -31,19 +31,25 @@
           <li role="presentation"><a href="#" data-bind="text: loggedIn() ? 'Logout' : 'Login', click: toggleSession"></a></li>
         </ul>
       </nav>
-      <h3>Reset Fork To Upstream</h3>
+      <h3>fork reset --hard</h3>
     </div>
 
     <div class="jumbotron" data-bind="visible: !loggedIn()">
-      <h1>Forking Crickey!</h1>
-      <p class="lead">Automagically reset your fork to a clean copy of the forked repository using the GitHub API.</p>
+      <h1>fork reset --hard</h1>
+      <p class="lead">Auto-magically reset your fork (to a clean copy of the forked repository) using the GitHub API.</p>
       <p data-bind="visible: !loggedIn()"><a class="btn btn-lg btn-success" href="#" role="button" data-bind="click: toggleSession">Get Started</a></p>
+    </div>
+
+    <div class="row" data-bind="visible: error">
+      <div class="col-lg-12 alert alert-danger" role="alert">
+        There was a problem with the previous operation: <span data-bind="text:error"></span>
+      </div>
     </div>
 
     <div class="row" data-bind="visible: loggedIn">
       <form class="col-lg-12" data-bind="submit: loadSelectedRepoDetails">
         <h4>1. Choose a fork you have push access to -</h4>
-        <input class="form-control" data-bind="jqAuto: { source: repos, value: selectedRepo, labelProp: 'FullName' }" />  
+        <input class="form-control" placeholder="owner/repository" data-bind="jqAuto: { source: repos, value: _selectedRepo, labelProp: 'FullName' }" />  
       </form>
     </div>
 
@@ -123,7 +129,7 @@
       </form>
     </div>
 
-    <div class="row details">
+    <div class="row details"  data-bind="visible: !loggedIn()">
       <div class="col-lg-6">
         <h4>How does it work?</h4>
         <p>For every branch in your repository, the GitHub API is used to perform the equivalent of -</p>

@@ -1,7 +1,6 @@
 import $ from "jquery";
 import "jquery-ui/autocomplete";
 import ko from "knockout";
-import "knockout-jqAutocomplete/src/knockout-jqAutocomplete"
 import {v4 as uuid} from "node-uuid";
 
 const API_BASE_URL = "http://localhost:3000";
@@ -9,15 +8,24 @@ const API_REPOS_URL = `${API_BASE_URL}/secure/repos`;
 const API_LOGIN_URL = `${API_BASE_URL}/login`;
 const API_LOGOUT_URL = `${API_BASE_URL}/logout`;
 
-global.$ = $;
+// keep knockout-jqAutocomplete happy
+global.jQuery = $;
 global.ko = ko;
+import "knockout-jqAutocomplete/src/knockout-jqAutocomplete"
 
 class Model {
 	constructor() {
+		this.error = ko.observable();
 		this.ready = ko.observable(false);
 		this.loggedIn = ko.observable(false);
 		this.repos = ko.observableArray();
-		this.selectedRepo = ko.observable();
+		this._selectedRepo = ko.observable();
+		this.selectedRepo = ko.computed(() => {
+			const repo = this._selectedRepo();
+			if (repo && repo.Owner && repo.Name) {
+				return repo;
+			}
+		});
 		this.selectedRepoDetails = ko.observable();
 		this.viewSelectedRepoDetails = ko.observable();
 		this.userEnteredFullName = ko.observable();
@@ -48,13 +56,13 @@ class Model {
 			});
 		});
 		this.selectedRepoHasChanges = ko.computed(() => {
-			var summary = this.selectedRepoSummary();
+			const summary = this.selectedRepoSummary();
 			return summary && (summary.created + summary.deleted + summary.reset > 0);
 		});
 		this.selectedRepoInSync = ko.computed(() =>
 			this.selectedRepoDetails() && !this.selectedRepoHasChanges());
 
-		this.selectedRepo.subscribe(repo => this.loadSelectedRepoDetails());
+		this.selectedRepo.subscribe(() => this.loadSelectedRepoDetails());
 
 		this.refreshRepos()
 			.then(d => this.ready(true), e => this.ready(true));
@@ -89,9 +97,15 @@ class Model {
 	}
 
 	_handleAjaxError(e) {
-		console.error(e);
-		if (e.status === 0 || e.status === 401) {
-			this.loggedIn(false);
+		switch (e.status) {
+			case 0:
+			case 401:
+				this.loggedIn(false);
+				break;
+			case 500:
+			default:
+				this.error("it's not you it's me, we've grown apart, or it might be you, I'm not sure...");
+				break;
 		}
 	}
 
@@ -120,8 +134,10 @@ class Model {
 
 	loadSelectedRepoDetails() {
 		this.selectedRepoDetails(null);
-		this._get(this._getSelectedRepoUrl())
-			.then(repoDetails => this._setSelectedRepoDetails(repoDetails));
+		if (this.selectedRepo()) {
+			this._get(this._getSelectedRepoUrl())
+				.then(repoDetails => this._setSelectedRepoDetails(repoDetails));
+		}
 	}
 
 	_setSelectedRepoDetails(repoDetails) {
