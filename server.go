@@ -9,6 +9,7 @@ import (
 	"github.com/unrolled/render"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
+	"log"
 	"net/http"
 	"os"
 )
@@ -118,5 +119,8 @@ func main() {
 	unsecure.Use(negroni.NewStatic(http.Dir("public")))
 	unsecure.UseHandler(unsecureRouter)
 
-	unsecure.Run(":" + os.Getenv("PORT"))
+	err := http.ListenAndServeTLS(":"+os.Getenv("PORT"), os.Getenv("CERT_FILE"), os.Getenv("KEY_FILE"), unsecure)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
