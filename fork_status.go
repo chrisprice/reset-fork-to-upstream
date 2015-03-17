@@ -103,7 +103,12 @@ func (f *Fork) GetStatus() (status *ForkStatus, err error) {
 	return f.getStatus(), nil
 }
 
-func (f *Fork) backupBranch(prefix, name, sha string) *github.Reference {
+type referenceOperation struct {
+	*github.Reference
+	error
+}
+
+func (f *Fork) backupBranch(prefix, name, sha string, c chan referenceOperation) {
 	path := fmt.Sprintf("refs/backups/%s/%s", prefix, name)
 	ref := &github.Reference{
 		Ref:    &path,
@@ -113,25 +118,31 @@ func (f *Fork) backupBranch(prefix, name, sha string) *github.Reference {
 	fmt.Printf("create %s: %s\n", path, sha)
 	ref, _, err := f.client.Git.CreateRef(f.owner, f.repo, ref)
 
-	if err != nil {
-		panic(err)
-	}
-
-	return ref
+	c <- referenceOperation{ref, err}
 }
 
 func (f *Fork) backupBranches(status *ForkStatus) []github.Reference {
 	prefix := time.Now().Format("20060102220405")
 
-	refs := make([]github.Reference, 0, len(status.Branches))
+	// Sized to length of branches to allow leak free panic-ing
+	c := make(chan referenceOperation, len(status.Branches))
 	for name, branch := range status.Branches {
-		refs = append(refs, *f.backupBranch(prefix, name, branch.SHA))
+		go f.backupBranch(prefix, name, branch.SHA, c)
+	}
+
+	refs := make([]github.Reference, 0, len(status.Branches))
+	for _ = range status.Branches {
+		r := <-c
+		if r.error != nil {
+			panic(r.error)
+		}
+		refs = append(refs, *r.Reference)
 	}
 
 	return refs
 }
 
-func (f *Fork) resetBranch(name string, branch *BranchStatus) *github.Reference {
+func (f *Fork) resetBranch(name string, branch *BranchStatus, c chan referenceOperation) {
 	var (
 		ref *github.Reference
 		err error
@@ -164,17 +175,23 @@ func (f *Fork) resetBranch(name string, branch *BranchStatus) *github.Reference 
 		err = errors.New("SHA and ParentSHA can not be empty")
 	}
 
-	if err != nil {
-		panic(err)
-	}
-
-	return ref
+	c <- referenceOperation{ref, err}
 }
 
 func (f *Fork) resetBranches(status *ForkStatus) []*github.Reference {
-	refs := make([]*github.Reference, 0, len(status.Branches))
+	// Sized to length of branches to allow leak free panic-ing
+	c := make(chan referenceOperation, len(status.Branches))
 	for name, branch := range status.Branches {
-		refs = append(refs, f.resetBranch(name, branch))
+		go f.resetBranch(name, branch, c)
+	}
+
+	refs := make([]*github.Reference, 0, len(status.Branches))
+	for _ = range status.Branches {
+		r := <-c
+		if r.error != nil {
+			panic(r.error)
+		}
+		refs = append(refs, r.Reference)
 	}
 
 	return refs
