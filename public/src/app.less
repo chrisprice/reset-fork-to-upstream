@@ -49,7 +49,8 @@
 @import "../node_modules/bootstrap/less/utilities.less";
 @import "../node_modules/bootstrap/less/responsive-utilities.less";
 
-@import "../node_modules/jquery-ui/themes/smoothness/jquery-ui.css";
+// Force bundling by importing as less
+@import (less) "../node_modules/jquery-ui/themes/smoothness/jquery-ui.css";
 
 /* Space out content a bit */
 body {
